@@ -29,8 +29,9 @@ import struct
 from hashlib import sha256
 from py_ecc.bn128 import curve_order
 
-from .r1cs import r1cs_constraint
+from r1cs import r1cs_constraint
 
+curve_order = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
 
 def make_constants(name, n, e):
     """
@@ -131,6 +132,8 @@ def LongsightF(x_L, x_R, C, R, e, p, k=0):
     for i in range(0, R):
         j = powmod(x_L + k + C[i], e, p)
         x_L, x_R = (x_R + j) % p, x_L
+        s = 'The value of x_L is ' + repr(x_L) + ', and X_R is ' + repr(x_R) + ' in the i-th round' + repr(i)
+        print(s)
 
     return x_L
 
@@ -152,6 +155,19 @@ def LongsightF152p5(x_L, x_R):
     return LongsightF(x_L, x_R, C, R, e, p)
 
 
+
+def LongsightF152p5MerkleRoot(depth):
+    x_L = 2
+    x_R = 3
+    for i in range(0, depth):
+        p = curve_order
+        e = 5
+        R = 2 * math.ceil(math.log(p) / math.log2(e))
+        assert R == 152
+        _, C = make_constants("LongsightF", R, e)
+        x_L = LongsightF(x_L, x_R, C, R, e, p)
+        x_R = x_L
+    return x_L    
 """
 From: https://keccak.team/files/SpongeIndifferentiability.pdf
 
@@ -190,4 +206,4 @@ def sponge(p, n, r, F):
 
 if __name__ == "__main__":
     #print(LongsightF152p5(1, 1))
-    print(make_constants_cxx("LongsightF", 5, 5))
+    print(LongsightF152p5MerkleRoot(8))
